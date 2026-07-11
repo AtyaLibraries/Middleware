@@ -29,6 +29,20 @@ public sealed class ResultHttpExtensionsTests
     }
 
     [Fact]
+    public async Task ToHttpResult_Should_Return_NoContent_When_Result_Succeeds_And_Mapper_Is_Resolved_From_RequestServices()
+    {
+        var mapper = new StubResultToProblemDetailsMapper(CreateProblemDetails(StatusCodes.Status409Conflict));
+        var httpContext = CreateHttpContext(mapper);
+
+        var httpResult = Result.Success().ToHttpResult(httpContext);
+
+        await httpResult.ExecuteAsync(httpContext);
+
+        httpContext.Response.StatusCode.Should().Be(StatusCodes.Status204NoContent);
+        mapper.MapResultCallCount.Should().Be(0);
+    }
+
+    [Fact]
     public async Task ToHttpResult_Should_Write_ProblemDetails_When_Result_Fails()
     {
         var httpContext = CreateHttpContext();
@@ -66,6 +80,23 @@ public sealed class ResultHttpExtensionsTests
     }
 
     [Fact]
+    public async Task ToHttpResult_Should_Return_Ok_When_Typed_Result_Succeeds_And_Mapper_Is_Resolved_From_RequestServices()
+    {
+        var mapper = new StubResultToProblemDetailsMapper(CreateProblemDetails(StatusCodes.Status404NotFound));
+        var httpContext = CreateHttpContext(mapper);
+
+        var httpResult = Result.Success("customer-42").ToHttpResult(httpContext);
+
+        await httpResult.ExecuteAsync(httpContext);
+
+        httpContext.Response.StatusCode.Should().Be(StatusCodes.Status200OK);
+        mapper.MapTypedResultCallCount.Should().Be(0);
+
+        var body = await ReadBodyAsync(httpContext);
+        body.Should().Contain("customer-42");
+    }
+
+    [Fact]
     public async Task ToHttpResult_Should_Write_ProblemDetails_When_Typed_Result_Fails()
     {
         var httpContext = CreateHttpContext();
@@ -88,6 +119,21 @@ public sealed class ResultHttpExtensionsTests
         var error = new Error("validation.required", "Email is required.", "email", kind: ErrorKind.Validation);
 
         var httpResult = error.ToHttpResult(httpContext, mapper);
+
+        await httpResult.ExecuteAsync(httpContext);
+
+        httpContext.Response.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+        mapper.MapErrorCallCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ToHttpResult_Should_Write_ProblemDetails_When_Error_Mapper_Is_Resolved_From_RequestServices()
+    {
+        var mapper = new StubResultToProblemDetailsMapper(CreateProblemDetails(StatusCodes.Status400BadRequest));
+        var httpContext = CreateHttpContext(mapper);
+        var error = new Error("validation.required", "Email is required.", "email", kind: ErrorKind.Validation);
+
+        var httpResult = error.ToHttpResult(httpContext);
 
         await httpResult.ExecuteAsync(httpContext);
 
@@ -148,6 +194,18 @@ public sealed class ResultHttpExtensionsTests
         act.Should().Throw<ArgumentNullException>();
     }
 
+    [Fact]
+    public void ToHttpResult_Should_Throw_Helpful_Error_When_Mapper_Is_Missing_From_RequestServices()
+    {
+        var httpContext = CreateHttpContext();
+
+        var act = () => Result.Success().ToHttpResult(httpContext);
+
+        act.Should()
+            .Throw<InvalidOperationException>()
+            .WithMessage("*AddAtyaWebMiddleware()*");
+    }
+
     private static AspNetProblemDetails CreateProblemDetails(int statusCode)
     {
         var problemDetails = new AspNetProblemDetails
@@ -167,11 +225,20 @@ public sealed class ResultHttpExtensionsTests
 
     private static DefaultHttpContext CreateHttpContext()
     {
+        return CreateHttpContext(mapper: null);
+    }
+
+    private static DefaultHttpContext CreateHttpContext(IResultToProblemDetailsMapper? mapper)
+    {
+        var services = new ServiceCollection().AddLogging();
+        if (mapper is not null)
+        {
+            services.AddSingleton(mapper);
+        }
+
         return new DefaultHttpContext
         {
-            RequestServices = new ServiceCollection()
-                .AddLogging()
-                .BuildServiceProvider(),
+            RequestServices = services.BuildServiceProvider(),
             Response =
             {
                 Body = new MemoryStream()

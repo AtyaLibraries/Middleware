@@ -43,7 +43,6 @@ Install-Package Atya.Web.Middleware
 ## Quick Start
 
 ```csharp
-using Atya.Errors.ProblemDetails.Abstractions;
 using Atya.Foundation.Results;
 using Atya.Web.Middleware.Extensions;
 
@@ -57,7 +56,7 @@ app.UseAtyaWebMiddleware();
 
 app.MapGet(
     "/customers/{id}",
-    (string id, HttpContext httpContext, IResultToProblemDetailsMapper mapper) =>
+    (string id, HttpContext httpContext) =>
     {
         Result<string> result = id == "42"
             ? Result.Success("Ada Lovelace")
@@ -66,7 +65,7 @@ app.MapGet(
                 "Customer was not found.",
                 ErrorKind.NotFound);
 
-        return result.ToHttpResult(httpContext, mapper);
+        return result.ToHttpResult(httpContext);
     });
 
 app.Run();
@@ -79,14 +78,20 @@ app.Run();
 ```csharp
 using Atya.Web.Middleware.Extensions;
 
-builder.Services.AddAtyaWebMiddleware(options =>
+builder.Services.AddAtyaWebMiddleware(
+    configureMiddleware: options =>
+    {
+        options.CorrelationIdHeaderName = "X-Correlation-ID";
+    },
+    configureProblemDetails: options =>
 {
     options.IncludeTraceId = true;
 });
 ```
 
-`AddAtyaWebMiddleware` delegates to `AddAtyaProblemDetails`, which registers the exception and Result
-mappers owned by `Atya.Errors.ProblemDetails`.
+`AddAtyaWebMiddleware` registers the correlation middleware options and delegates RFC 9457 mapping to
+`AddAtyaProblemDetails`, which registers the exception and Result mappers owned by
+`Atya.Errors.ProblemDetails`.
 
 ### Add the exception middleware
 
@@ -96,28 +101,32 @@ using Atya.Web.Middleware.Extensions;
 app.UseAtyaWebMiddleware();
 ```
 
-This composes the Atya ProblemDetails exception handler into the ASP.NET Core pipeline.
+This accepts an incoming correlation id from the configured header, generates one when the request does not
+provide it, echoes the value on the response, and composes the Atya ProblemDetails exception handler into
+the ASP.NET Core pipeline. The same correlation id is exposed to `Atya.Errors.ProblemDetails`, so mapped
+ProblemDetails responses include it in the configured correlation extension.
 
 ### Return Results from endpoints
 
 ```csharp
-using Atya.Errors.ProblemDetails.Abstractions;
 using Atya.Foundation.Results;
 using Atya.Web.Middleware.Extensions;
 
-static IResult GetCustomer(HttpContext httpContext, IResultToProblemDetailsMapper mapper)
+static IResult GetCustomer(HttpContext httpContext)
 {
     Result<string> result = Result.Failure<string>(
         "customers.not_found",
         "Customer was not found.",
         ErrorKind.NotFound);
 
-    return result.ToHttpResult(httpContext, mapper);
+    return result.ToHttpResult(httpContext);
 }
 ```
 
-Successful `Result<T>` values become `200 OK` with the value. Successful untyped `Result` values become
-`204 No Content`. Failures delegate to `IResultToProblemDetailsMapper`.
+Success is part of the public API contract: successful untyped `Result` values become `204 No Content`;
+successful `Result<TValue>` values become `200 OK` with the JSON success value. Failures delegate to
+`IResultToProblemDetailsMapper`. Overloads that accept an explicit mapper are available for advanced tests
+and manually wired endpoints; the `HttpContext`-only overloads resolve the mapper from `RequestServices`.
 
 ### Return validation details through Error
 

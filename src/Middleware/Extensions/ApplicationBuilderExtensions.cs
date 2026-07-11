@@ -4,6 +4,7 @@
 
 using Atya.Errors.ProblemDetails.Extensions;
 using Atya.Foundation.Guards;
+using Atya.Web.Middleware.Internal;
 using Microsoft.AspNetCore.Builder;
 
 namespace Atya.Web.Middleware.Extensions;
@@ -23,6 +24,9 @@ public static class ApplicationBuilderExtensions
     {
         Guard.AgainstNull(app);
 
-        return app.UseAtyaProblemDetails();
+        app.UseMiddleware<AtyaCorrelationIdMiddleware>();
+        app.UseAtyaProblemDetails();
+
+        return app;
     }
 }

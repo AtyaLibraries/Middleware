@@ -1,4 +1,3 @@
-using Atya.Errors.ProblemDetails.Abstractions;
 using Atya.Foundation.Results;
 using Atya.Web.Middleware.Extensions;
 using Microsoft.AspNetCore.Http;
@@ -22,18 +21,18 @@ public static class Program
 
         var httpContext = new DefaultHttpContext
         {
+            RequestServices = provider,
             Request =
             {
                 Path = "/customers/42"
             }
         };
-        var mapper = provider.GetRequiredService<IResultToProblemDetailsMapper>();
         var result = Result.Failure<string>(
             "customers.not_found",
             "Customer was not found.",
             ErrorKind.NotFound);
 
-        var response = result.ToHttpResult(httpContext, mapper);
+        var response = result.ToHttpResult(httpContext);
 
         Console.WriteLine(response.GetType().Name);
     }
