@@ -5,6 +5,7 @@
 using Atya.Errors.ProblemDetails.Abstractions;
 using Atya.Errors.ProblemDetails.Options;
 using Atya.Web.Middleware.Extensions;
+using Atya.Web.Middleware.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -35,11 +36,29 @@ public sealed class ServiceCollectionExtensionsTests
     public void AddAtyaWebMiddleware_Should_Apply_ProblemDetails_Configuration()
     {
         using var provider = new ServiceCollection()
-            .AddAtyaWebMiddleware(options => options.IncludeTraceId = false)
+            .AddAtyaWebMiddleware(configureProblemDetails: options => options.IncludeTraceId = false)
             .BuildServiceProvider();
 
         var options = provider.GetRequiredService<IOptions<AtyaProblemDetailsOptions>>().Value;
 
         options.IncludeTraceId.Should().BeFalse();
+    }
+
+    [Fact]
+    public void AddAtyaWebMiddleware_Should_Support_Non_Ambiguous_Compile_Shapes()
+    {
+        using var defaultProvider = new ServiceCollection()
+            .AddAtyaWebMiddleware()
+            .BuildServiceProvider();
+        using var middlewareProvider = new ServiceCollection()
+            .AddAtyaWebMiddleware(m => { })
+            .BuildServiceProvider();
+        using var problemDetailsProvider = new ServiceCollection()
+            .AddAtyaWebMiddleware(configureProblemDetails: p => { })
+            .BuildServiceProvider();
+
+        defaultProvider.GetRequiredService<IOptions<AtyaWebMiddlewareOptions>>().Value.Should().NotBeNull();
+        middlewareProvider.GetRequiredService<IOptions<AtyaWebMiddlewareOptions>>().Value.Should().NotBeNull();
+        problemDetailsProvider.GetRequiredService<IOptions<AtyaProblemDetailsOptions>>().Value.Should().NotBeNull();
     }
 }
