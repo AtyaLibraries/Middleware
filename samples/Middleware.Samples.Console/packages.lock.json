@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net10.0": {
+      "Atya.Foundation.Results": {
+        "type": "Transitive",
+        "resolved": "1.1.0",
+        "contentHash": "7u4kPGnVubYn10agEOOxfMbN6GRLXpdtAMSCcCDvnNhSx4tdhrdrNf2AXKdNX+GP0Ekm6PSTsWlHMuZYMdFUYQ=="
+      },
+      "Atya.Web.Middleware": {
+        "type": "Project",
+        "dependencies": {
+          "Atya.Errors.Exceptions": "[1.0.0, )",
+          "Atya.Errors.ProblemDetails": "[1.1.0, )",
+          "Atya.Foundation.Guards": "[1.0.2, )"
+        }
+      },
+      "Atya.Errors.Exceptions": {
+        "type": "CentralTransitive",
+        "requested": "[1.0.0, )",
+        "resolved": "1.0.0",
+        "contentHash": "sO2d1REbj3mLCFHHsltjZHpMQY8G2wJZANjIzS9XUSd8OgpoSe4O4pHINURwTu89151vhFK/A96I2qjgEdxzUQ==",
+        "dependencies": {
+          "Atya.Foundation.Guards": "1.0.0"
+        }
+      },
+      "Atya.Errors.ProblemDetails": {
+        "type": "CentralTransitive",
+        "requested": "[1.1.0, )",
+        "resolved": "1.1.0",
+        "contentHash": "jgdO+M4DSrOzjAcWsiNfV1tVomihHIISm2jof2RvvXD9qBCbdCQ71IsldCC/Rk+rp4T2rdb+Wg364FqbKTuSCg==",
+        "dependencies": {
+          "Atya.Errors.Exceptions": "1.0.0",
+          "Atya.Foundation.Guards": "1.0.0",
+          "Atya.Foundation.Results": "1.1.0"
+        }
+      },
+      "Atya.Foundation.Guards": {
+        "type": "CentralTransitive",
+        "requested": "[1.0.2, )",
+        "resolved": "1.0.2",
+        "contentHash": "pK0hllKNECWmAK1XInrp94OSon9NFnbkPL/P37WzUD1riSR/AuaeRo0/VkPP8fw6KuAR3IrqsIHNv2l+soKBhA=="
+      }
+    }
+  }
+}

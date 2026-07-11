@@ -1,0 +1,13 @@
+<Project Sdk="Atya.Build.Sdk">
+
+  <!-- Framework, analyzers, and default test packages are provided by Atya.Build.Sdk. -->
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Middleware\Middleware.csproj" />
+  </ItemGroup>
+
+</Project>
