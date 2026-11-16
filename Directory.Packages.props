@@ -5,7 +5,7 @@
     </PropertyGroup>
     <ItemGroup Label="Runtime">
         <PackageVersion Include="Atya.Errors.Exceptions" Version="1.0.0" />
-        <PackageVersion Include="Atya.Errors.ProblemDetails" Version="1.1.0" />
+        <PackageVersion Include="Atya.Errors.ProblemDetails" Version="1.1.1" />
         <PackageVersion Include="Atya.Foundation.Guards" Version="1.0.2" />
     </ItemGroup>
     <ItemGroup Label="Benchmarking">
